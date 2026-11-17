@@ -12,6 +12,7 @@ import { z } from "zod";
 import { env, isProduction } from "./config.js";
 import { registerErrorHandler } from "./errors.js";
 import { chatRoutes } from "./modules/chats/chats.routes.js";
+import { messageRoutes } from "./modules/messages/messages.routes.js";
 import { userRoutes } from "./modules/users/users.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -59,6 +60,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(userRoutes);
   await app.register(chatRoutes);
+  await app.register(messageRoutes);
 
   return app;
 }
