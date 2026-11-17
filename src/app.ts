@@ -9,7 +9,7 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { env, isProduction } from "./config.js";
+import { env } from "./config.js";
 import { badRequest, registerErrorHandler } from "./errors.js";
 import { chatRoutes } from "./modules/chats/chats.routes.js";
 import { groupRoutes } from "./modules/chats/groups.routes.js";
@@ -18,10 +18,7 @@ import { userRoutes } from "./modules/users/users.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: isProduction
-      ? { level: env.LOG_LEVEL }
-      : { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL },
-    disableRequestLogging: env.NODE_ENV === "test",
+    logger: { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL },
   });
 
   app.removeContentTypeParser("application/json");
