@@ -10,8 +10,9 @@ import {
 } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { env, isProduction } from "./config.js";
-import { registerErrorHandler } from "./errors.js";
+import { badRequest, registerErrorHandler } from "./errors.js";
 import { chatRoutes } from "./modules/chats/chats.routes.js";
+import { groupRoutes } from "./modules/chats/groups.routes.js";
 import { messageRoutes } from "./modules/messages/messages.routes.js";
 import { userRoutes } from "./modules/users/users.routes.js";
 
@@ -21,6 +22,20 @@ export async function buildApp(): Promise<FastifyInstance> {
       ? { level: env.LOG_LEVEL }
       : { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL },
     disableRequestLogging: env.NODE_ENV === "test",
+  });
+
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (_request, body, done) => {
+    const text = typeof body === "string" ? body : body.toString("utf8");
+    if (text.trim() === "") {
+      done(null, undefined);
+      return;
+    }
+    try {
+      done(null, JSON.parse(text));
+    } catch {
+      done(badRequest("invalid_json", "Request body is not valid JSON"), undefined);
+    }
   });
 
   app.setValidatorCompiler(validatorCompiler);
@@ -38,6 +53,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       },
       tags: [
         { name: "chats", description: "Chat creation and membership" },
+        { name: "groups", description: "Group chat creation and management" },
         { name: "messages", description: "Messages, read receipts and last seen" },
         { name: "users", description: "Users and their chats" },
         { name: "system", description: "Health" },
@@ -60,6 +76,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(userRoutes);
   await app.register(chatRoutes);
+  await app.register(groupRoutes);
   await app.register(messageRoutes);
 
   return app;

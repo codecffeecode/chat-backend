@@ -50,6 +50,13 @@ export const MessagePage = z.object({
 
 export const UserBody = z.object({ userId: IdInput }).strict();
 
+export const EditMessageBody = z
+  .object({
+    userId: IdInput,
+    text: z.string().trim().min(1, "text must not be empty").max(4000),
+  })
+  .strict();
+
 export const ReadReceipt = z.object({
   chatId: Id,
   messageId: z.string(),

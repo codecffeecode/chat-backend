@@ -1,7 +1,8 @@
 import { FieldPath, FieldValue, type Timestamp } from "firebase-admin/firestore";
 import { firestore } from "../../firebase/firestore.js";
-import { notFound } from "../../errors.js";
+import { conflict, forbidden, notFound } from "../../errors.js";
 import { assertMember, getChat, touchChat } from "../chats/chats.service.js";
+import { getMemberRole } from "../chats/groups.service.js";
 import {
   chatMetaRef,
   memberStateRef,
@@ -231,6 +232,58 @@ export async function updateLastSeen(
     throw new Error("last seen state missing after transaction");
   }
   return { ...toLastSeenDto(chatId, state), updated };
+}
+
+export async function editMessage(
+  chatId: string,
+  messageId: string,
+  userId: string,
+  text: string,
+): Promise<MessageDto> {
+  await assertMember(chatId, userId);
+  const ref = messagesRef(chatId).doc(messageId);
+
+  await firestore().runTransaction(async (tx) => {
+    const message = (await tx.get(ref)).data();
+    if (!message) {
+      throw notFound("message_not_found", `Message ${messageId} does not exist in chat ${chatId}`);
+    }
+    if (message.senderId !== userId) {
+      throw forbidden("not_sender", "Only the sender can edit a message");
+    }
+    if (message.deletedAt) {
+      throw conflict("message_deleted", "Deleted messages cannot be edited");
+    }
+    if (message.text === text) {
+      return;
+    }
+    tx.update(ref, { text, editedAt: FieldValue.serverTimestamp() });
+  });
+
+  return loadMessage(chatId, messageId);
+}
+
+export async function deleteMessage(chatId: string, messageId: string, userId: string): Promise<MessageDto> {
+  const chat = await assertMember(chatId, userId);
+  const role = chat.type === "group" ? await getMemberRole(chatId, userId) : null;
+  const isModerator = role === "owner" || role === "admin";
+  const ref = messagesRef(chatId).doc(messageId);
+
+  await firestore().runTransaction(async (tx) => {
+    const message = (await tx.get(ref)).data();
+    if (!message) {
+      throw notFound("message_not_found", `Message ${messageId} does not exist in chat ${chatId}`);
+    }
+    if (message.senderId !== userId && !isModerator) {
+      throw forbidden("not_sender", "Only the sender or a group owner/admin can delete a message");
+    }
+    if (message.deletedAt) {
+      return;
+    }
+    tx.update(ref, { text: "", deletedAt: FieldValue.serverTimestamp() });
+  });
+
+  return loadMessage(chatId, messageId);
 }
 
 export async function listLastSeen(chatId: string): Promise<{ lastSeq: number; members: LastSeenDto[] }> {

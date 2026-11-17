@@ -2,6 +2,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { errorResponses } from "../../schemas/common.js";
 import {
   ChatParams,
+  EditMessageBody,
   LastSeenBody,
   LastSeenList,
   LastSeenResult,
@@ -14,6 +15,8 @@ import {
   UserBody,
 } from "./messages.schemas.js";
 import {
+  deleteMessage,
+  editMessage,
   getMessages,
   listLastSeen,
   markMessageRead,
@@ -72,6 +75,39 @@ export const messageRoutes: FastifyPluginAsyncZod = (app) => {
     },
     async (request) =>
       markMessageRead(request.params.chatId, request.params.messageId, request.body.userId),
+  );
+
+  app.patch(
+    "/chat/:chatId/message/:messageId",
+    {
+      schema: {
+        tags: ["messages"],
+        summary: "Edit a message (sender only)",
+        description: "Sets editedAt. Deleted messages cannot be edited (409).",
+        params: MessageParams,
+        body: EditMessageBody,
+        response: { 200: Message, ...errorResponses },
+      },
+    },
+    async (request) =>
+      editMessage(request.params.chatId, request.params.messageId, request.body.userId, request.body.text),
+  );
+
+  app.delete(
+    "/chat/:chatId/message/:messageId",
+    {
+      schema: {
+        tags: ["messages"],
+        summary: "Delete a message (soft delete)",
+        description:
+          "Allowed for the sender, or a group owner/admin. Text is cleared and deletedAt set; the message keeps its place in the order. Idempotent.",
+        params: MessageParams,
+        querystring: UserBody,
+        response: { 200: Message, ...errorResponses },
+      },
+    },
+    async (request) =>
+      deleteMessage(request.params.chatId, request.params.messageId, request.query.userId),
   );
 
   app.post(
