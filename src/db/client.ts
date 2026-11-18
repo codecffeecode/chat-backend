@@ -9,7 +9,7 @@ export type Executor = Database | Transaction;
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
-  max: process.env.VERCEL ? 1 : 10,
+  max: process.env.VERCEL ? 5 : 10,
   idleTimeoutMillis: 10_000,
   connectionTimeoutMillis: 10_000,
 });

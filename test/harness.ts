@@ -1,7 +1,7 @@
 import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { inArray, or } from "drizzle-orm";
 import { afterAll, beforeAll } from "vitest";
-import { buildApp } from "../src/app.js";
+import { buildApp } from "../src/create-app.js";
 import { env } from "../src/config.js";
 import { closeDb, db } from "../src/db/client.js";
 import { chatMembers, chats, users } from "../src/db/schema.js";
