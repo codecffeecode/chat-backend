@@ -1,6 +1,5 @@
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
-import swaggerUi from "@fastify/swagger-ui";
 import Fastify, { type FastifyInstance } from "fastify";
 import {
   jsonSchemaTransform,
@@ -10,6 +9,7 @@ import {
 } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { env } from "./config.js";
+import { registerDocs } from "./docs.js";
 import { badRequest, registerErrorHandler } from "./errors.js";
 import { chatRoutes } from "./modules/chats/chats.routes.js";
 import { groupRoutes } from "./modules/chats/groups.routes.js";
@@ -58,7 +58,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     transform: jsonSchemaTransform,
   });
-  await app.register(swaggerUi, { routePrefix: "/docs" });
+  registerDocs(app);
 
   app.withTypeProvider<ZodTypeProvider>().get(
     "/health",

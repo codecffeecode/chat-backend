@@ -1,8 +1,9 @@
+import type { FastifyInstance } from "fastify";
 import { buildApp } from "./create-app.js";
 import { env } from "./config.js";
 import { closeDb } from "./db/client.js";
 
-const app = await buildApp();
+const app: FastifyInstance = await buildApp();
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, "shutting down");

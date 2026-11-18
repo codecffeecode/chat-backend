@@ -18,7 +18,6 @@
   "dependencies": {
     "@fastify/cors": "^11.4.3",
     "@fastify/swagger": "^9.9.5",
-    "@fastify/swagger-ui": "^6.1.4",
     "@google-cloud/firestore": "^9.4.1",
     "dotenv": "^18.0.10",
     "drizzle-orm": "^0.45.4",
@@ -42,6 +41,6 @@
   "type": "module",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   }
 }

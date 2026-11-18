@@ -7,7 +7,10 @@ This is a chat backend written in Node.js and TypeScript. It supports 1:1 and gr
 
 Built with Fastify 5, zod 4 for request and response validation, Drizzle ORM, firebase-admin and Vitest. TypeScript runs with every strict flag on, including `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. ESLint uses `strictTypeChecked`.
 
-Interactive API docs (Swagger UI) are served at **`/docs`**.
+**Live:** https://chat-backend-weld-alpha.vercel.app
+**API docs:** https://chat-backend-weld-alpha.vercel.app/docs (Swagger UI, with try-it-out enabled)
+
+The live deployment uses Neon PostgreSQL and a real Firestore project, with demo users already seeded. Get their IDs from `GET /users`.
 
 ## Architecture
 
@@ -139,7 +142,7 @@ When the last owner leaves, ownership passes to the longest-standing admin, or t
 ### Example
 
 ```bash
-BASE=http://localhost:4000
+BASE=https://chat-backend-weld-alpha.vercel.app
 ALICE=8a6dd9bb-dad9-4bb6-ae9a-dc62d8199a5c
 BOB=df6c34aa-4f2e-43de-81d5-56ad0b94672a
 
@@ -183,6 +186,25 @@ To use the emulator, set `FIREBASE_PROJECT_ID=demo-chat-backend` and `FIRESTORE_
 | `FIRESTORE_EMULATOR_HOST` | When set, the server uses the emulator |
 | `FIRESTORE_COLLECTION_PREFIX` | Optional prefix for every collection name. Tests use it to isolate their data. |
 | `PORT`, `LOG_LEVEL`, `NODE_ENV` | Server settings |
+
+## Deployment (Vercel)
+
+The app runs as a single Vercel Function.
+
+- `npm run build` compiles TypeScript into `dist/`.
+- `api/index.js` builds the Fastify app once per instance and hands each request to it.
+- A rewrite in `vercel.json` routes every path to that function.
+- On Vercel the Postgres pool is limited to 5 connections and uses Neon's pooled endpoint.
+
+The Vercel project needs these environment variables:
+
+- `DATABASE_URL`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `LOG_LEVEL`
+
+Run migrations from your machine with `npm run db:migrate`, pointed at the production database.
 
 ## Tests
 
